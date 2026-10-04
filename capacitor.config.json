@@ -1,0 +1,8 @@
+{
+  "appId": "com.pizzaroma.app",
+  "appName": "Pizzaroma",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#1b0b2e"
+  }
+}
