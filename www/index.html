@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body>
+<title>Pizzaroma</title>
+<meta name="theme-color" content="#1b0b2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-screen phone app — scrolling content under a floating liquid-glass header and tab bar, sheets slide up from the bottom. */
+:root{
+  --ink:#fff8f0;
+  --ink-soft:rgba(255,244,232,.72);
+  --ink-faint:rgba(255,244,232,.5);
+  --night:#1b0b2e;
+  --tomato:#ff4d2e;
+  --cheese:#ffc23d;
+  --basil:#3ddc84;
+  --berry:#c03bff;
+  --glass:rgba(255,255,255,.11);
+  --glass-strong:rgba(255,255,255,.2);
+  --glass-edge:rgba(255,255,255,.32);
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --font-body:"Figtree","Segoe UI",Roboto,system-ui,sans-serif;
+  --r-lg:28px; --r-md:20px; --r-sm:14px;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.45;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+input,textarea,select{font:inherit;color:var(--ink)}
+:focus-visible{outline:2px solid var(--cheese);outline-offset:2px}
+
+/* ---------- animated colorful backdrop ---------- */
+.sky{position:fixed;inset:0;overflow:hidden;z-index:0;background:radial-gradient(120% 80% at 50% 0%,#3a1060 0%,var(--night) 60%)}
+.blob{position:absolute;border-radius:50%;filter:blur(60px);opacity:.75;mix-blend-mode:screen;animation:drift 22s ease-in-out infinite alternate}
+.b1{width:340px;height:340px;background:var(--tomato);top:-80px;left:-90px}
+.b2{width:300px;height:300px;background:var(--cheese);top:30%;right:-120px;animation-duration:28s;opacity:.55}
+.b3{width:360px;height:360px;background:var(--berry);bottom:-120px;left:10%;animation-duration:25s}
+.b4{width:220px;height:220px;background:var(--basil);top:55%;left:-60px;animation-duration:31s;opacity:.4}
+@keyframes drift{0%{transform:translate(0,0) scale(1)}50%{transform:translate(60px,40px) scale(1.15)}100%{transform:translate(-30px,90px) scale(.95)}}
+
+/* ---------- liquid glass ---------- */
+.glass{position:relative;background:linear-gradient(135deg,rgba(255,255,255,.18),rgba(255,255,255,.05));
+  -webkit-backdrop-filter:blur(22px) saturate(190%);backdrop-filter:blur(22px) saturate(190%);
+  border:1px solid var(--glass-edge);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.55),inset 0 -1px 1px rgba(255,255,255,.12),inset 0 0 18px rgba(255,255,255,.06),0 10px 30px rgba(8,0,20,.35)}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(120% 60% at 20% 0%,rgba(255,255,255,.35),transparent 55%);opacity:.55;mix-blend-mode:overlay}
+
+/* ---------- shell ---------- */
+.app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto}
+.top{position:absolute;top:0;left:0;right:0;z-index:20;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px}
+.topbar{display:flex;align-items:center;gap:12px;border-radius:999px;padding:8px 8px 8px 16px}
+.brand{font-family:var(--font-display);font-weight:800;font-size:22px;letter-spacing:-.02em;flex:1;display:flex;align-items:center;gap:8px}
+.brand svg{width:28px;height:28px;flex:none}
+.brand small{display:block;font-family:var(--font-body);font-weight:500;font-size:11px;color:var(--ink-soft);letter-spacing:.02em}
+.icon-btn{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;position:relative;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.icon-btn:active{transform:scale(.88)}
+.icon-btn svg{width:22px;height:22px}
+.badge{position:absolute;top:-2px;right:-2px;min-width:20px;height:20px;border-radius:10px;background:var(--tomato);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 0 2px var(--night)}
+.badge.pop{animation:pop .45s cubic-bezier(.3,1.8,.5,1)}
+@keyframes pop{0%{transform:scale(.4)}100%{transform:scale(1)}}
+
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;padding:calc(env(safe-area-inset-top,0px) + 86px) 16px calc(env(safe-area-inset-bottom,0px) + 120px);scroll-behavior:smooth}
+.scroll::-webkit-scrollbar{display:none}
+.view{display:flex;flex-direction:column;gap:22px;animation:viewIn .45s cubic-bezier(.2,.9,.3,1)}
+@keyframes viewIn{from{opacity:.0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+
+/* ---------- tab bar ---------- */
+.tabs{position:absolute;left:0;right:0;bottom:0;z-index:20;padding:0 16px calc(env(safe-area-inset-bottom,0px) + 14px)}
+.tabbar{display:flex;border-radius:999px;padding:6px;gap:4px;position:relative}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;border-radius:999px;font-size:11px;font-weight:600;color:var(--ink-soft);position:relative;z-index:1;transition:color .3s}
+.tab svg{width:22px;height:22px;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.tab.on{color:var(--ink)}
+.tab.on svg{transform:translateY(-2px) scale(1.12)}
+.tab-pill{position:absolute;top:6px;bottom:6px;border-radius:999px;background:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 14px rgba(255,77,46,.35);transition:left .45s cubic-bezier(.3,1.35,.5,1),width .45s cubic-bezier(.3,1.35,.5,1),opacity .25s}
+.tabbar{touch-action:none;user-select:none;-webkit-user-select:none;transition:transform .35s cubic-bezier(.3,1.6,.5,1)}
+.tabbar.pressing{transform:scale(1.035)}
+.tabbar.lensing .tab-pill{opacity:0;transition:opacity .12s}
+/* liquid-glass lens: a clear droplet that magnifies the tabs under it */
+.lens{position:absolute;left:0;top:50%;z-index:3;border-radius:999px;pointer-events:none;overflow:hidden;opacity:0;
+  background:rgba(255,255,255,.07);-webkit-backdrop-filter:blur(10px) saturate(170%) brightness(1.15);backdrop-filter:blur(10px) saturate(170%) brightness(1.15);
+  box-shadow:inset 0 2px 1px rgba(255,255,255,.75),inset 0 -2px 3px rgba(255,255,255,.3),inset 3px 0 4px rgba(255,70,110,.55),inset -3px 0 4px rgba(70,170,255,.55),inset 0 0 14px rgba(255,255,255,.18),0 10px 28px rgba(10,0,25,.45),0 0 0 .5px rgba(255,255,255,.6);
+  will-change:transform,opacity}
+.lens::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(70% 45% at 30% 12%,rgba(255,255,255,.55),transparent 60%),radial-gradient(60% 40% at 75% 100%,rgba(255,200,120,.22),transparent 70%);mix-blend-mode:screen}
+.lens-in{position:absolute;left:0;top:0;transform-origin:0 0;display:flex;gap:4px;padding:6px}
+.lens-in .tab{color:#fff;text-shadow:0 0 10px rgba(255,255,255,.35)}
+.lens-in .tab svg{transform:none!important;filter:drop-shadow(0 0 6px rgba(255,194,61,.55))}
+
+/* ---------- home ---------- */
+.hello h1{font-family:var(--font-display);font-weight:800;font-size:34px;line-height:1.02;letter-spacing:-.03em;margin:0;text-wrap:balance}
+.hello h1 em{font-style:normal;background:linear-gradient(90deg,var(--cheese),var(--tomato) 60%,var(--berry));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hello p{margin:6px 0 0;color:var(--ink-soft)}
+.search{display:flex;align-items:center;gap:10px;border-radius:999px;padding:4px 6px 4px 16px}
+.search svg{width:20px;height:20px;opacity:.75;flex:none}
+.search input{flex:1;min-width:0;background:none;border:0;outline:0;padding:10px 0;font-size:15px}
+.search input::placeholder{color:var(--ink-faint)}
+.search .clear{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--ink-soft)}
+
+.promos{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:4px 16px 8px}
+.promos::-webkit-scrollbar{display:none}
+.promo{flex:0 0 86%;scroll-snap-align:center;border-radius:var(--r-lg);padding:20px;min-height:168px;display:flex;align-items:flex-end;overflow:hidden;position:relative;text-align:left}
+.promo .art{position:absolute;right:-30px;top:-20px;width:180px;height:180px;animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.promo .txt{position:relative;max-width:62%;text-shadow:0 2px 12px rgba(0,0,0,.25)}
+[hidden]{display:none!important}
+.promo .kick{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.85}
+.promo h3{font-family:var(--font-display);font-weight:800;font-size:24px;line-height:1.05;margin:4px 0 6px;letter-spacing:-.02em}
+.promo .code{display:inline-block;font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.25);border:1px dashed rgba(255,255,255,.6)}
+.p1{background:linear-gradient(135deg,#ff6a3d,#ff2e63)}
+.p2{background:linear-gradient(135deg,#8a2be2,#ff4fd8)}
+.p3{background:linear-gradient(135deg,#00b37e,#1ec8ff)}
+.p4{background:linear-gradient(135deg,#ff9f1c,#ffcf3d);color:#3a1600}
+
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.sec-h h2{font-family:var(--font-display);font-weight:800;font-size:22px;margin:0;letter-spacing:-.02em}
+.sec-h button{font-size:13px;font-weight:600;color:var(--cheese)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;display:flex;align-items:center;gap:8px;border-radius:999px;padding:8px 14px 8px 8px;font-weight:600;font-size:14px;transition:transform .25s,background .3s}
+.chip .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center}
+.chip .dot svg{width:26px;height:26px}
+.chip.on{background:linear-gradient(135deg,var(--tomato),#ff2e8a);border-color:rgba(255,255,255,.55)}
+.chip:active{transform:scale(.94)}
+
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.card{border-radius:var(--r-md);padding:10px 10px 12px;display:flex;flex-direction:column;gap:6px;text-align:left;animation:cardIn .5s cubic-bezier(.2,.9,.3,1) both;transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
+.card:active{transform:scale(.96)}
+@keyframes cardIn{from{opacity:.0;transform:translateY(18px) scale(.95)}to{opacity:1;transform:none}}
+.card .pic{aspect-ratio:1;max-width:100%;border-radius:16px;display:grid;place-items:center;position:relative;overflow:hidden}
+.card .pic svg{width:86%;height:86%;filter:drop-shadow(0 10px 14px rgba(0,0,0,.35));transition:transform .6s cubic-bezier(.2,.9,.3,1)}
+.card:hover .pic svg{transform:rotate(18deg) scale(1.04)}
+.card .name{font-weight:700;font-size:14.5px;line-height:1.2;min-height:2.4em}
+.card .meta{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.price{font-family:var(--font-display);font-weight:800;font-size:17px;font-variant-numeric:tabular-nums}
+.price small{font-family:var(--font-body);font-weight:500;font-size:11px;color:var(--ink-faint);margin-right:2px}
+.add{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--cheese),var(--tomato));color:#2a0a00;box-shadow:0 6px 14px rgba(255,77,46,.45),inset 0 1px 0 rgba(255,255,255,.6);transition:transform .25s cubic-bezier(.3,1.8,.5,1)}
+.add:active{transform:scale(.8) rotate(90deg)}
+.add svg{width:18px;height:18px}
+.fav{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:rgba(20,5,35,.35);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.fav svg{width:16px;height:16px;transition:transform .3s cubic-bezier(.3,1.8,.5,1)}
+.fav.on svg{fill:var(--tomato);stroke:var(--tomato);transform:scale(1.15)}
+.tagrow{position:absolute;left:8px;top:8px;display:flex;gap:4px;flex-wrap:wrap;max-width:70%}
+.tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 7px;border-radius:999px;background:rgba(20,5,35,.45);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.tag.new{background:var(--basil);color:#002a14}
+.tag.hot{background:var(--tomato);color:#fff}
+.tag.veg{background:rgba(61,220,132,.3)}
+.empty{border-radius:var(--r-md);padding:28px 20px;text-align:center;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;gap:10px}
+.empty svg{width:72px;height:72px;opacity:.9}
+.empty b{color:var(--ink);font-size:17px}
+
+/* ---------- sheet ---------- */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(10,0,20,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .35s}
+.scrim.on{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:50;max-width:520px;margin:0 auto;max-height:92%;display:flex;flex-direction:column;border-radius:var(--r-lg) var(--r-lg) 0 0;
+  background:linear-gradient(180deg,rgba(60,24,90,.72),rgba(30,10,48,.86));-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid var(--glass-edge);border-bottom:0;box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 -20px 50px rgba(0,0,0,.4);
+  transform:translateY(105%);transition:transform .5s cubic-bezier(.2,.95,.25,1)}
+.sheet.on{transform:none}
+.grab{width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.4);margin:10px auto 0;flex:none}
+.sheet-body{overflow-y:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:18px}
+.sheet-foot{padding:12px 16px calc(env(safe-area-inset-bottom,0px) + 16px);border-top:1px solid rgba(255,255,255,.12);display:flex;gap:12px;align-items:center}
+.hero-pic{width:min(260px,72%);aspect-ratio:1;margin:0 auto;animation:heroIn .8s cubic-bezier(.2,.9,.3,1)}
+.hero-pic svg{width:100%;height:100%;filter:drop-shadow(0 20px 30px rgba(0,0,0,.45))}
+@keyframes heroIn{from{transform:rotate(-120deg) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.d-title{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.05;letter-spacing:-.02em;margin:0;text-wrap:balance}
+.d-desc{color:var(--ink-soft);margin:6px 0 0}
+.facts{display:flex;gap:8px;flex-wrap:wrap}
+.fact{font-size:12px;font-weight:600;padding:6px 10px;border-radius:999px;background:var(--glass);border:1px solid rgba(255,255,255,.18)}
+.opt-h{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin:0 0 8px}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;padding:5px;border-radius:18px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.12)}
+.seg button{padding:10px 6px;border-radius:13px;font-weight:600;font-size:13px;line-height:1.2;transition:background .3s,transform .25s}
+.seg button small{display:block;font-weight:500;font-size:11px;color:var(--ink-faint)}
+.seg button.on{background:rgba(255,255,255,.22);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 4px 12px rgba(0,0,0,.25)}
+.extras{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.extra{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.12);font-size:13px;font-weight:600;text-align:left;transition:background .3s,border-color .3s}
+.extra span:last-child{color:var(--ink-faint);font-weight:500;white-space:nowrap}
+.extra.on{background:rgba(61,220,132,.2);border-color:rgba(61,220,132,.7)}
+.qty{display:flex;align-items:center;gap:4px;border-radius:999px;padding:4px}
+.qty button{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:20px;font-weight:600}
+.qty button:active{background:rgba(255,255,255,.15)}
+.qty output{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.cta{flex:1;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:15px 20px;border-radius:999px;font-weight:700;font-size:16px;color:#2a0a00;
+  background:linear-gradient(135deg,var(--cheese),#ff8a2e 55%,var(--tomato));box-shadow:0 10px 26px rgba(255,77,46,.5),inset 0 1px 0 rgba(255,255,255,.7);transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.cta:active{transform:scale(.96)}
+.cta:disabled{opacity:.5}
+.cta .p{font-family:var(--font-display);font-weight:800;font-variant-numeric:tabular-nums}
+
+/* ---------- cart ---------- */
+.line{display:flex;gap:12px;align-items:center;border-radius:var(--r-md);padding:10px;animation:cardIn .4s both}
+.line .pic{width:64px;height:64px;flex:none;border-radius:14px;display:grid;place-items:center}
+.line .pic svg{width:90%;height:90%}
+.line .info{flex:1;min-width:0}
+.line .info b{display:block;font-size:14.5px;line-height:1.2}
+.line .info span{display:block;font-size:12px;color:var(--ink-faint);margin-top:2px}
+.line .right{display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.line .qty{padding:2px;background:rgba(0,0,0,.2);border-radius:999px}
+.line .qty button{width:28px;height:28px;font-size:16px}
+.sum{border-radius:var(--r-md);padding:16px;display:flex;flex-direction:column;gap:8px}
+.row{display:flex;justify-content:space-between;gap:12px;font-variant-numeric:tabular-nums}
+.row.muted{color:var(--ink-soft)}
+.row.total{font-family:var(--font-display);font-weight:800;font-size:22px;padding-top:8px;border-top:1px solid rgba(255,255,255,.15)}
+.row.disc{color:var(--basil)}
+.coupon{display:flex;gap:8px;border-radius:999px;padding:4px 4px 4px 16px;align-items:center}
+.coupon input{flex:1;min-width:0;background:none;border:0;outline:0;padding:10px 0;text-transform:uppercase;letter-spacing:.08em}
+.coupon input::placeholder{text-transform:none;letter-spacing:0;color:var(--ink-faint)}
+.pill-btn{padding:10px 16px;border-radius:999px;font-weight:700;font-size:13px;background:rgba(255,255,255,.2);box-shadow:inset 0 1px 0 rgba(255,255,255,.45)}
+.hint{font-size:12.5px;color:var(--ink-faint);margin:-10px 4px 0}
+.hint.ok{color:var(--basil)}
+.hint.err{color:#ff8f7a}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint)}
+.field input,.field textarea{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:12px 14px;outline:0;transition:border-color .25s}
+.field input:focus,.field textarea:focus{border-color:var(--cheese)}
+.field input::placeholder,.field textarea::placeholder{color:var(--ink-faint)}
+.pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pay button{padding:12px 6px;border-radius:14px;background:rgba(0,0,0,.18);border:1px solid rgba(255,255,255,.14);font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px}
+.pay button svg{width:22px;height:22px}
+.pay button.on{background:rgba(255,194,61,.18);border-color:var(--cheese)}
+
+/* ---------- tracking ---------- */
+.track{border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:16px}
+.track-top{display:flex;align-items:center;gap:14px}
+.oven{width:76px;height:76px;flex:none;border-radius:22px;display:grid;place-items:center;background:linear-gradient(135deg,var(--tomato),var(--berry));box-shadow:0 10px 24px rgba(192,59,255,.4)}
+.oven svg{width:52px;height:52px;animation:spin 6s linear infinite}
+.track h3{font-family:var(--font-display);font-weight:800;font-size:20px;margin:0;line-height:1.1}
+.track .eta{color:var(--ink-soft);font-size:13px;margin-top:3px}
+.bar{height:8px;border-radius:4px;background:rgba(255,255,255,.14);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,var(--cheese),var(--tomato),var(--berry));background-size:200% 100%;animation:flow 2s linear infinite;transition:width .8s cubic-bezier(.2,.9,.3,1)}
+@keyframes flow{to{background-position:-200% 0}}
+.steps{display:flex;flex-direction:column;gap:0;margin:0;padding:0;list-style:none}
+.steps li{display:flex;gap:12px;align-items:flex-start;position:relative;padding-bottom:14px;color:var(--ink-faint)}
+.steps li:last-child{padding-bottom:0}
+.steps li::before{content:"";position:absolute;left:11px;top:24px;bottom:0;width:2px;background:rgba(255,255,255,.14)}
+.steps li:last-child::before{display:none}
+.steps .knob{width:24px;height:24px;flex:none;border-radius:50%;border:2px solid rgba(255,255,255,.25);display:grid;place-items:center;transition:all .4s}
+.steps .knob svg{width:13px;height:13px;opacity:0}
+.steps li.done{color:var(--ink)}
+.steps li.done .knob{background:var(--basil);border-color:var(--basil);color:#002a14}
+.steps li.done .knob svg{opacity:1}
+.steps li.now{color:var(--ink)}
+.steps li.now .knob{border-color:var(--cheese);box-shadow:0 0 0 0 rgba(255,194,61,.6);animation:ping 1.6s infinite}
+@keyframes ping{70%{box-shadow:0 0 0 10px rgba(255,194,61,0)}100%{box-shadow:0 0 0 0 rgba(255,194,61,0)}}
+.steps b{display:block;font-size:14.5px}
+.steps small{font-size:12px;color:var(--ink-faint)}
+.order{border-radius:var(--r-md);padding:14px;display:flex;flex-direction:column;gap:6px}
+.order .row b{font-weight:700}
+.status{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px}
+.status.live{background:rgba(255,194,61,.22);color:var(--cheese)}
+.status.done{background:rgba(61,220,132,.2);color:var(--basil)}
+
+/* ---------- profile ---------- */
+.me{border-radius:var(--r-lg);padding:18px;display:flex;gap:14px;align-items:center}
+.avatar{width:62px;height:62px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:var(--font-display);font-weight:800;font-size:24px;background:conic-gradient(from 200deg,var(--cheese),var(--tomato),var(--berry),var(--cheese));box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}
+.points{border-radius:var(--r-lg);padding:18px;display:flex;flex-direction:column;gap:10px;background:linear-gradient(135deg,rgba(255,194,61,.35),rgba(255,77,46,.25))}
+.points .big{font-family:var(--font-display);font-weight:800;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.menu{border-radius:var(--r-md);overflow:hidden}
+.menu button{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;text-align:left;font-weight:600;border-bottom:1px solid rgba(255,255,255,.1)}
+.menu button:last-child{border-bottom:0}
+.menu button svg{width:20px;height:20px;opacity:.85}
+.menu button span{flex:1}
+.menu button em{font-style:normal;font-size:12px;color:var(--ink-faint);font-weight:500}
+.ver{border-radius:var(--r-md);padding:14px 16px;display:flex;flex-direction:column;gap:6px}
+.ver header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ver header b{font-family:var(--font-display);font-size:18px}
+.ver ul{margin:0;padding-left:18px;color:var(--ink-soft);font-size:13.5px;display:flex;flex-direction:column;gap:3px}
+.ver time{font-size:12px;color:var(--ink-faint)}
+
+/* ---------- toast + fly ---------- */
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 104px);z-index:60;transform:translate(-50%,30px);opacity:0;padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;white-space:nowrap;transition:all .4s cubic-bezier(.3,1.5,.5,1);pointer-events:none;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+.toast.on{transform:translate(-50%,0);opacity:1}
+.fly{position:fixed;z-index:70;width:46px;height:46px;pointer-events:none;transition:transform .75s cubic-bezier(.5,-.3,.6,1),opacity .75s}
+.fly svg{width:100%;height:100%}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:65}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+}
+@media (min-width:560px){.app{border-left:1px solid rgba(255,255,255,.08);border-right:1px solid rgba(255,255,255,.08)}}
+</style>
+
+<div class="sky" aria-hidden="true"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="blob b4"></div></div>
+
+<div class="app">
+  <header class="top">
+    <div class="topbar glass">
+      <div class="brand" id="brand"></div>
+      <button class="icon-btn" id="favTop" aria-label="Favoritos"></button>
+      <button class="icon-btn glass" id="cartTop" aria-label="Carrito"></button>
+    </div>
+  </header>
+
+  <main class="scroll" id="scroll"><div id="view"></div></main>
+
+  <nav class="tabs">
+    <div class="tabbar glass" id="tabbar">
+      <span class="tab-pill" id="pill"></span>
+    </div>
+  </nav>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true"><div class="grab"></div><div id="sheetInner" style="display:flex;flex-direction:column;min-height:0"></div></section>
+<div class="toast glass" id="toast" role="status"></div>
+<canvas class="confetti" id="confetti"></canvas>
+
+<script>
+(() => {
+"use strict";
+const APP_VERSION = "3.0";
+
+/* ================= icons ================= */
+const I = {
+  home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>',
+  menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 21h20z"/><circle cx="12" cy="13" r="1.6" fill="currentColor"/><circle cx="9" cy="17" r="1.3" fill="currentColor"/><circle cx="15" cy="17.5" r="1.3" fill="currentColor"/></svg>',
+  bag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1 12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  user:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>',
+  heart:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 21s-7.5-4.6-9.5-9.2C1 8.2 3.4 4.5 7 4.5c2 0 3.6 1.1 5 3 1.4-1.9 3-3 5-3 3.6 0 6 3.7 4.5 7.3C19.5 16.4 12 21 12 21z"/></svg>',
+  plus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  search:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  x:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+  check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5 9-10"/></svg>',
+  card:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6 15h4"/></svg>',
+  cash:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.6"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 21s7-6.2 7-11.5a7 7 0 0 0-14 0C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>',
+  gift:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="8" width="18" height="5" rx="1"/><path d="M5 13v8h14v-8M12 8v13M12 8S10.5 3.5 8 4.2 7.6 8 12 8zm0 0s1.5-4.5 4-3.8.4 3.8-4 3.8z"/></svg>',
+  spark:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>',
+  chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>',
+};
+
+/* ================= procedural food art ================= */
+function rng(seed){let s=0;for(const c of String(seed))s=(s*31+c.charCodeAt(0))>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
+const TOP = {
+  pep:(x,y,r)=>`<circle cx="${x}" cy="${y}" r="${7.5}" fill="#c62a1c"/><circle cx="${x-2}" cy="${y-2}" r="1.6" fill="#e2563f"/><circle cx="${x+2.4}" cy="${y+1.5}" r="1.2" fill="#8e1a10"/>`,
+  mush:(x,y,r)=>`<g transform="rotate(${r*360} ${x} ${y})"><path d="M${x-6} ${y} a6 5 0 0 1 12 0z" fill="#d8c4a8"/><rect x="${x-2}" y="${y}" width="4" height="5" rx="1.5" fill="#efe2cc"/></g>`,
+  olive:(x,y)=>`<circle cx="${x}" cy="${y}" r="4.2" fill="none" stroke="#24161c" stroke-width="2.6"/>`,
+  pepper:(x,y,r)=>`<path d="M${x-6} ${y+2} q6 -9 12 0" fill="none" stroke="#2fb34e" stroke-width="3" stroke-linecap="round" transform="rotate(${r*360} ${x} ${y})"/>`,
+  redpep:(x,y,r)=>`<path d="M${x-6} ${y+2} q6 -9 12 0" fill="none" stroke="#ff4a3a" stroke-width="3" stroke-linecap="round" transform="rotate(${r*360} ${x} ${y})"/>`,
+  pine:(x,y,r)=>`<rect x="${x-4.5}" y="${y-4.5}" width="9" height="9" rx="2" fill="#ffd94a" stroke="#f0b62a" transform="rotate(${r*90} ${x} ${y})"/>`,
+  ham:(x,y,r)=>`<rect x="${x-6}" y="${y-4.5}" width="12" height="9" rx="3" fill="#f0909a" transform="rotate(${r*90} ${x} ${y})"/>`,
+  basil:(x,y,r)=>`<ellipse cx="${x}" cy="${y}" rx="7" ry="3.6" fill="#2a9a43" transform="rotate(${r*180} ${x} ${y})"/>`,
+  corn:(x,y)=>`<circle cx="${x}" cy="${y}" r="2.8" fill="#ffd23a"/>`,
+  onion:(x,y,r)=>`<path d="M${x-6} ${y} a6 6 0 0 1 12 0" fill="none" stroke="#c77bd6" stroke-width="2.2" transform="rotate(${r*360} ${x} ${y})"/>`,
+  meat:(x,y)=>`<circle cx="${x}" cy="${y}" r="4.6" fill="#7a3a22"/><circle cx="${x-1.4}" cy="${y-1.2}" r="1.4" fill="#9a5434"/>`,
+  chicken:(x,y,r)=>`<rect x="${x-5}" y="${y-3.5}" width="10" height="7" rx="3.5" fill="#e7b46a" transform="rotate(${r*180} ${x} ${y})"/>`,
+  tomato:(x,y)=>`<circle cx="${x}" cy="${y}" r="6" fill="#e3392b"/><circle cx="${x}" cy="${y}" r="3.4" fill="#f2735f"/>`,
+  shrimp:(x,y,r)=>`<path d="M${x-5} ${y+3} a5.5 5.5 0 1 1 7 -6" fill="none" stroke="#ff8b6a" stroke-width="3.4" stroke-linecap="round" transform="rotate(${r*360} ${x} ${y})"/>`,
+  jalap:(x,y)=>`<circle cx="${x}" cy="${y}" r="4.4" fill="#3faa3c"/><circle cx="${x}" cy="${y}" r="2" fill="#bfe8a0"/>`,
+  egg:(x,y)=>`<ellipse cx="${x}" cy="${y}" rx="7" ry="6" fill="#fff8e8"/><circle cx="${x}" cy="${y}" r="3" fill="#ffb21f"/>`,
+};
+function pizzaSVG(p){
+  const R=rng(p.id), sauce={red:"#d8402a",white:"#f4ead2",bbq:"#7a2c18",pesto:"#4f8f3a",curry:"#e89a2a"}[p.sauce||"red"];
+  const cheese=p.sauce==="white"?"#fff3c6":"#ffd464";
+  let s=`<svg viewBox="0 0 200 200" aria-hidden="true"><defs><radialGradient id="cr${p.id}" cx="40%" cy="35%"><stop offset="0" stop-color="#f6c070"/><stop offset="1" stop-color="#c07a2c"/></radialGradient></defs>`;
+  s+=`<circle cx="100" cy="100" r="96" fill="url(#cr${p.id})"/><circle cx="100" cy="100" r="96" fill="none" stroke="#a5621f" stroke-width="2" opacity=".5"/>`;
+  if(p.stuffed) s+=`<circle cx="100" cy="100" r="88" fill="none" stroke="#ffe7a3" stroke-width="5" stroke-dasharray="10 7" opacity=".9"/>`;
+  s+=`<circle cx="100" cy="100" r="80" fill="${sauce}"/>`;
+  for(let i=0;i<14;i++){const a=R()*6.283,d=R()*62,x=100+Math.cos(a)*d,y=100+Math.sin(a)*d;s+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(14+R()*14).toFixed(1)}" ry="${(10+R()*10).toFixed(1)}" fill="${cheese}" opacity="${(.75+R()*.25).toFixed(2)}" transform="rotate(${(R()*180).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`}
+  const tops=p.top||[]; const per=tops.length?Math.max(4,Math.round(18/tops.length)):0;
+  for(const t of tops){for(let i=0;i<per;i++){const a=R()*6.283,d=12+R()*58;s+=TOP[t](+(100+Math.cos(a)*d).toFixed(1),+(100+Math.sin(a)*d).toFixed(1),R())}}
+  for(let k=0;k<4;k++){const a=k*Math.PI/4;s+=`<line x1="${(100+Math.cos(a)*96).toFixed(1)}" y1="${(100+Math.sin(a)*96).toFixed(1)}" x2="${(100-Math.cos(a)*96).toFixed(1)}" y2="${(100-Math.sin(a)*96).toFixed(1)}" stroke="#7a3c10" stroke-width="1.3" opacity=".35"/>`}
+  return s+`<ellipse cx="72" cy="58" rx="34" ry="14" fill="#fff" opacity=".13" transform="rotate(-30 72 58)"/></svg>`;
+}
+function otherSVG(p){
+  const c=p.color||"#ff7a3d", k=p.art;
+  const W=b=>`<svg viewBox="0 0 200 200" aria-hidden="true">${b}</svg>`;
+  if(k==="cup") return W(`<path d="M58 54h84l-10 120a8 8 0 0 1-8 7H76a8 8 0 0 1-8-7z" fill="${c}"/><path d="M58 54h84l-3 30H61z" fill="#fff" opacity=".22"/><rect x="50" y="42" width="100" height="16" rx="8" fill="#f4f0ff"/><rect x="108" y="10" width="8" height="40" rx="4" fill="#ff4d6a" transform="rotate(12 112 30)"/><ellipse cx="82" cy="110" rx="7" ry="30" fill="#fff" opacity=".25"/>`);
+  if(k==="bottle") return W(`<path d="M86 14h28v26c0 8 18 18 18 40v92a10 10 0 0 1-10 10H78a10 10 0 0 1-10-10V80c0-22 18-32 18-40z" fill="${c}"/><rect x="84" y="8" width="32" height="12" rx="4" fill="#fff"/><rect x="68" y="98" width="64" height="40" fill="#fff" opacity=".85"/><rect x="78" y="112" width="44" height="6" rx="3" fill="${c}"/><ellipse cx="84" cy="150" rx="5" ry="22" fill="#fff" opacity=".25"/>`);
+  if(k==="wings"){let s="";for(let i=0;i<5;i++){const a=i*1.256,x=100+Math.cos(a)*42,y=100+Math.sin(a)*42;s+=`<g transform="rotate(${i*72+20} ${x} ${y})"><ellipse cx="${x}" cy="${y}" rx="30" ry="19" fill="${c}"/><rect x="${x+22}" y="${y-5}" width="20" height="10" rx="5" fill="#f3e2c8"/><ellipse cx="${x-8}" cy="${y-6}" rx="10" ry="4" fill="#fff" opacity=".25"/></g>`}return W(`<circle cx="100" cy="100" r="92" fill="#f4efe8"/><circle cx="100" cy="100" r="80" fill="#ebe3d8"/>${s}`)}
+  if(k==="pasta"){let s="";const R=rng(p.id);for(let i=0;i<16;i++){const x=50+R()*100,y=70+R()*60;s+=`<path d="M${x.toFixed(0)} ${y.toFixed(0)} q12 -14 24 0 t24 0" fill="none" stroke="${p.noodle||'#f7d27a'}" stroke-width="6" stroke-linecap="round"/>`}return W(`<ellipse cx="100" cy="112" rx="94" ry="70" fill="#fff"/><ellipse cx="100" cy="106" rx="80" ry="56" fill="${c}"/>${s}<circle cx="80" cy="96" r="6" fill="#2a9a43"/><circle cx="124" cy="112" r="5" fill="#2a9a43"/>`)}
+  if(k==="salad"){let s="";const R=rng(p.id);const cols=["#5ccf5a","#2fa53e","#9be37a","#e3392b","#ffd23a","#c77bd6"];for(let i=0;i<26;i++){const a=R()*6.283,d=R()*62;s+=`<ellipse cx="${(100+Math.cos(a)*d).toFixed(0)}" cy="${(100+Math.sin(a)*d*.8).toFixed(0)}" rx="${(8+R()*9).toFixed(0)}" ry="${(5+R()*6).toFixed(0)}" fill="${cols[i%cols.length]}" transform="rotate(${(R()*180).toFixed(0)} 100 100)"/>`}return W(`<circle cx="100" cy="100" r="94" fill="#f6f2ea"/><circle cx="100" cy="100" r="80" fill="#e8e0d2"/>${s}`)}
+  if(k==="bread"){let s="";for(let i=0;i<5;i++){s+=`<rect x="${26+i*30}" y="${54+(i%2)*10}" width="26" height="92" rx="12" fill="#e0a252"/><rect x="${30+i*30}" y="${60+(i%2)*10}" width="18" height="80" rx="9" fill="#f6d27a"/><circle cx="${39+i*30}" cy="${90+(i%2)*10}" r="3" fill="#3a9a43"/><circle cx="${36+i*30}" cy="${118+(i%2)*10}" r="2.5" fill="#3a9a43"/>`}return W(`<rect x="12" y="40" width="176" height="120" rx="20" fill="#f4efe8"/>${s}`)}
+  if(k==="balls"){let s="";const R=rng(p.id);for(let i=0;i<7;i++){const a=i*0.9,d=i?44:0,x=100+Math.cos(a)*d,y=100+Math.sin(a)*d;s+=`<circle cx="${x}" cy="${y}" r="24" fill="${c}"/><circle cx="${x-7}" cy="${y-8}" r="6" fill="#fff" opacity=".3"/>`}return W(`<circle cx="100" cy="100" r="94" fill="#f4efe8"/>${s}`)}
+  if(k==="cake") return W(`<ellipse cx="100" cy="164" rx="86" ry="18" fill="#f4efe8"/><path d="M28 80 172 60v86L28 160z" fill="${c}"/><path d="M28 80 172 60v18L28 98z" fill="${p.top2||'#fff3e0'}"/><path d="M28 120 172 104v8L28 128z" fill="${p.top2||'#fff3e0'}" opacity=".8"/><circle cx="140" cy="54" r="12" fill="#e3263b"/><path d="M140 42q4-14 12-16" stroke="#3a9a43" stroke-width="3" fill="none"/>`);
+  if(k==="brownie"){let s="";for(let i=0;i<4;i++){const x=30+(i%2)*74,y=36+Math.floor(i/2)*70;s+=`<rect x="${x}" y="${y}" width="66" height="60" rx="10" fill="${c}"/><rect x="${x+6}" y="${y+6}" width="54" height="14" rx="6" fill="#fff" opacity=".12"/><circle cx="${x+20}" cy="${y+34}" r="4" fill="#ffe1a8"/><circle cx="${x+44}" cy="${y+40}" r="4" fill="#ffe1a8"/>`}return W(s)}
+  if(k==="roll"){let s="";for(let i=0;i<4;i++){const x=58+(i%2)*84,y=58+Math.floor(i/2)*84;s+=`<circle cx="${x}" cy="${y}" r="38" fill="#d9944a"/><path d="M${x} ${y} m-4 0 a4 4 0 1 1 8 0 a10 10 0 1 1 -20 0 a16 16 0 1 1 32 0 a22 22 0 1 1 -44 0" fill="none" stroke="#7a3c18" stroke-width="4"/><path d="M${x-30} ${y-10} q30 -30 60 0" fill="none" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".85"/>`}return W(s)}
+  if(k==="icecream") return W(`<path d="M70 100 100 186 130 100z" fill="#e8a352"/><path d="M76 112l40 0M82 130l30 0" stroke="#c07a2c" stroke-width="3"/><circle cx="100" cy="74" r="38" fill="${c}"/><circle cx="74" cy="96" r="18" fill="${c}"/><circle cx="126" cy="96" r="18" fill="${c}"/><circle cx="100" cy="38" r="10" fill="#e3263b"/><ellipse cx="86" cy="60" rx="10" ry="6" fill="#fff" opacity=".35"/>`);
+  if(k==="combo") return W(`<g transform="translate(-20 20) scale(.8)">${pizzaSVG({id:p.id,top:p.top||["pep"]}).replace(/<\/?svg[^>]*>/g,"")}</g><g transform="translate(110 40) scale(.55)"><path d="M58 54h84l-10 120a8 8 0 0 1-8 7H76a8 8 0 0 1-8-7z" fill="${c}"/><rect x="50" y="42" width="100" height="16" rx="8" fill="#f4f0ff"/><rect x="108" y="6" width="8" height="44" rx="4" fill="#ff4d6a" transform="rotate(12 112 30)"/></g>`);
+  if(k==="calzone") return W(`<path d="M20 130a80 80 0 0 1 160 0z" fill="#e0a252"/><path d="M20 130h160" stroke="#b9772c" stroke-width="10" stroke-linecap="round" stroke-dasharray="2 14"/><ellipse cx="90" cy="86" rx="30" ry="10" fill="#fff" opacity=".2"/><circle cx="70" cy="110" r="4" fill="#3a9a43"/><circle cx="120" cy="100" r="4" fill="#3a9a43"/>`);
+  return W(`<circle cx="100" cy="100" r="80" fill="${c}"/>`);
+}
+const art = p => p.cat==="pz"||p.cat==="esp"||p.cat==="veg"||p.cat==="ext" ? pizzaSVG(p) : otherSVG(p);
+
+/* ================= catalog ================= */
+const CATS = [
+  {id:"all",name:"Todo",bg:"#ff7a3d"},
+  {id:"pz",name:"Clásicas",bg:"#ff4d2e"},
+  {id:"esp",name:"Especiales",bg:"#c03bff"},
+  {id:"veg",name:"Veggie",bg:"#2fbf6a"},
+  {id:"ext",name:"Peruanas",bg:"#ff2e63"},
+  {id:"cmb",name:"Combos",bg:"#ffb21f"},
+  {id:"ent",name:"Entradas",bg:"#e0a252"},
+  {id:"ala",name:"Alitas",bg:"#d8582a"},
+  {id:"pas",name:"Pastas",bg:"#f2b84b"},
+  {id:"ens",name:"Ensaladas",bg:"#4fbf5a"},
+  {id:"pos",name:"Postres",bg:"#ff6fb5"},
+  {id:"beb",name:"Bebidas",bg:"#1ec8ff"},
+];
+const P = [];
+const add = (cat,arr)=>arr.forEach(o=>P.push({cat,...o}));
+add("pz",[
+ {id:"pepperoni",name:"Pepperoni Lovers",desc:"Doble pepperoni crujiente sobre mozzarella fundida y salsa de tomate de la casa.",price:39.9,top:["pep"],pop:98,tags:["hot"]},
+ {id:"americana",name:"Americana",desc:"Jamón de pierna, mozzarella y orégano. La que nunca falla.",price:34.9,top:["ham"],pop:90},
+ {id:"hawaiana",name:"Hawaiana",desc:"Jamón y piña caramelizada con un toque de canela.",price:36.9,top:["ham","pine"],pop:92},
+ {id:"margarita",name:"Margarita",desc:"Tomate San Marzano, mozzarella fresca y albahaca recién cortada.",price:32.9,top:["basil","tomato"],pop:80,veg:1},
+ {id:"suprema",name:"Suprema",desc:"Pepperoni, carne, champiñones, pimiento verde, cebolla y aceitunas.",price:45.9,top:["pep","meat","mush","pepper","olive"],pop:95},
+ {id:"cuatroq",name:"Cuatro Quesos",desc:"Mozzarella, parmesano, gorgonzola y queso andino sobre crema.",price:42.9,top:[],sauce:"white",pop:84,veg:1},
+ {id:"meatlovers",name:"Meat Lovers",desc:"Pepperoni, jamón, salchicha italiana, tocino y carne molida.",price:47.9,top:["pep","ham","meat"],pop:93,tags:["hot"]},
+ {id:"champi",name:"Champiñón y Jamón",desc:"Champiñones salteados al ajo con jamón y mozzarella.",price:36.9,top:["mush","ham"],pop:70},
+ {id:"napolitana",name:"Napolitana",desc:"Rodajas de tomate, ajo laminado, orégano y aceite de oliva.",price:33.9,top:["tomato","basil"],pop:66,veg:1},
+ {id:"vegetariana",name:"Vegetariana",desc:"Pimientos, cebolla morada, champiñones, aceitunas y choclo.",price:37.9,top:["pepper","redpep","onion","mush","olive"],pop:74,veg:1},
+ {id:"pollobbq",name:"Pollo BBQ",desc:"Pollo a la parrilla, cebolla morada y salsa barbacoa ahumada.",price:41.9,top:["chicken","onion"],sauce:"bbq",pop:88},
+ {id:"tocino",name:"Tocino y Choclo",desc:"Tocino ahumado, choclo dulce y mozzarella gratinada.",price:38.9,top:["meat","corn"],pop:72},
+]);
+add("esp",[
+ {id:"stuffedcrust",name:"Borde Relleno Royale",desc:"Borde relleno de queso, pepperoni y jamón. Cada mordida termina en queso.",price:49.9,top:["pep","ham"],stuffed:1,pop:97,tags:["new"]},
+ {id:"diabla",name:"La Diabla",desc:"Pepperoni picante, jalapeños, ají limo y salsa de rocoto.",price:44.9,top:["pep","jalap","redpep"],pop:86,spicy:1,tags:["hot"]},
+ {id:"pesto",name:"Pesto & Burrata",desc:"Base de pesto genovés, burrata cremosa y tomates cherry.",price:52.9,top:["tomato","basil"],sauce:"pesto",pop:79,veg:1,tags:["new"]},
+ {id:"trufa",name:"Trufa Blanca",desc:"Crema de trufa, champiñones portobello y parmesano añejo.",price:56.9,top:["mush"],sauce:"white",pop:77},
+ {id:"mexicana",name:"Mexicana",desc:"Carne especiada, frijoles, jalapeños, pico de gallo y nachos.",price:45.9,top:["meat","jalap","tomato","corn"],pop:81,spicy:1},
+ {id:"mariscos",name:"Frutos del Mar",desc:"Langostinos al ajo, calamar y salsa de tomate con perejil.",price:58.9,top:["shrimp"],pop:69},
+ {id:"carbonara",name:"Carbonara",desc:"Crema, tocino crocante, parmesano y huevo al centro.",price:46.9,top:["meat","egg"],sauce:"white",pop:75},
+ {id:"pollocurry",name:"Pollo Curry",desc:"Pollo marinado en curry suave, pimientos y cebolla.",price:44.9,top:["chicken","redpep","onion"],sauce:"curry",pop:62},
+ {id:"cheeseburger",name:"Cheeseburger Pizza",desc:"Carne, pepinillos, cebolla, cheddar y salsa especial.",price:46.9,top:["meat","onion","pepper"],pop:83,tags:["new"]},
+]);
+add("veg",[
+ {id:"vegana",name:"Vegana Jardín",desc:"Queso vegetal, espinaca, pimientos asados, cebolla y champiñones.",price:42.9,top:["pepper","redpep","mush","onion"],pop:71,veg:1,tags:["new"]},
+ {id:"mediterranea",name:"Mediterránea",desc:"Aceitunas negras, tomate seco, cebolla morada y queso feta.",price:41.9,top:["olive","tomato","onion"],pop:68,veg:1},
+ {id:"espinaca",name:"Espinaca y Ricotta",desc:"Base blanca, espinaca baby, ricotta y nuez moscada.",price:40.9,top:["basil"],sauce:"white",pop:60,veg:1},
+ {id:"caprese",name:"Caprese",desc:"Mozzarella de búfala, tomate, albahaca y reducción de balsámico.",price:43.9,top:["tomato","basil"],pop:73,veg:1},
+ {id:"plantmeat",name:"Pepperoni Vegetal",desc:"Pepperoni a base de plantas sobre queso vegetal fundido.",price:44.9,top:["pep"],pop:64,veg:1},
+]);
+add("ext",[
+ {id:"lomo",name:"Lomo Saltado",desc:"Lomo fino salteado al wok, tomate, cebolla y papas al hilo.",price:52.9,top:["meat","tomato","onion"],pop:94,tags:["hot"]},
+ {id:"ajigallina",name:"Ají de Gallina",desc:"Pollo deshilachado en crema de ají amarillo, aceituna y huevo.",price:48.9,top:["chicken","olive","egg"],sauce:"curry",pop:85},
+ {id:"anticucho",name:"Anticuchera",desc:"Corazón en salsa anticuchera, choclo y salsa de rocoto.",price:49.9,top:["meat","corn","redpep"],sauce:"bbq",pop:78,spicy:1},
+ {id:"chicharron",name:"Chicharrón y Camote",desc:"Chicharrón de cerdo, camote glaseado y sarsa criolla.",price:51.9,top:["meat","onion","pine"],pop:76,tags:["new"]},
+ {id:"huancaina",name:"Huancaína",desc:"Base de salsa huancaína, pollo, aceitunas y queso fresco.",price:46.9,top:["chicken","olive"],sauce:"curry",pop:70},
+ {id:"acevichada",name:"Acevichada",desc:"Langostinos, salsa acevichada, cebolla y culantro.",price:57.9,top:["shrimp","onion"],sauce:"white",pop:67,spicy:1},
+]);
+add("cmb",[
+ {id:"cmbduo",name:"Combo Dúo",desc:"2 pizzas medianas a elección + gaseosa 1.5 L.",price:69.9,art:"combo",color:"#1a1a1a",top:["pep"],pop:96,tags:["hot"]},
+ {id:"cmbfam",name:"Combo Familiar",desc:"1 pizza familiar + pan al ajo + alitas x6 + gaseosa 1.5 L.",price:84.9,art:"combo",color:"#2b5bd8",top:["ham","pine"],pop:91},
+ {id:"cmbsolo",name:"Combo Personal",desc:"Pizza personal + pan al ajo x2 + bebida 500 ml.",price:24.9,art:"combo",color:"#e23b3b",top:["pep","mush"],pop:88},
+ {id:"cmbparty",name:"Combo Fiesta",desc:"3 pizzas familiares + 2 gaseosas 1.5 L + brownie x4.",price:139.9,art:"combo",color:"#7a2bd8",top:["pep","olive"],pop:80,tags:["new"]},
+ {id:"cmbveg",name:"Combo Verde",desc:"Pizza veggie mediana + ensalada César + limonada.",price:56.9,art:"combo",color:"#2fbf6a",top:["pepper","mush"],pop:65},
+]);
+add("ent",[
+ {id:"panajo",name:"Pan al Ajo",desc:"Bastones de pan horneado con mantequilla de ajo y perejil. 6 unidades.",price:12.9,art:"bread",pop:93},
+ {id:"panajoq",name:"Pan al Ajo con Queso",desc:"Bastones con mozzarella gratinada y orégano. 6 unidades.",price:15.9,art:"bread",pop:87},
+ {id:"cheesesticks",name:"Palitos de Queso",desc:"Mozzarella empanizada con salsa marinara. 8 unidades.",price:18.9,art:"balls",color:"#f0b04a",pop:82},
+ {id:"papas",name:"Papas Rústicas",desc:"Papas con cáscara, paprika y salsa de ajo. Porción grande.",price:13.9,art:"balls",color:"#f6c85a",pop:79},
+ {id:"tequenos",name:"Tequeños",desc:"Rellenos de queso con guacamole y salsa de rocoto. 8 unidades.",price:19.9,art:"bread",pop:84,tags:["hot"]},
+ {id:"calzone",name:"Calzone",desc:"Masa cerrada rellena de jamón, ricotta y mozzarella.",price:27.9,art:"calzone",pop:70},
+ {id:"rolls",name:"Pepperoni Rolls",desc:"Rollitos de masa con pepperoni y queso. 6 unidades.",price:16.9,art:"balls",color:"#d9944a",pop:73,tags:["new"]},
+]);
+add("ala",[
+ {id:"alabbq",name:"Alitas BBQ",desc:"Alitas glaseadas en salsa barbacoa ahumada. 8 unidades.",price:26.9,art:"wings",color:"#8a3a1c",pop:89},
+ {id:"alabuff",name:"Alitas Buffalo",desc:"Picantes, con salsa blue cheese y bastones de apio. 8 unidades.",price:26.9,art:"wings",color:"#e0542a",pop:86,spicy:1,tags:["hot"]},
+ {id:"alamiel",name:"Alitas Miel Mostaza",desc:"Dulces y suaves, con ajonjolí tostado. 8 unidades.",price:26.9,art:"wings",color:"#e8a33a",pop:78},
+ {id:"alaacev",name:"Alitas Acevichadas",desc:"Con salsa acevichada y cebolla china. 8 unidades.",price:28.9,art:"wings",color:"#f2c46a",pop:72,tags:["new"]},
+ {id:"alamax",name:"Alitas Party x20",desc:"20 alitas en hasta 3 salsas a elección.",price:59.9,art:"wings",color:"#b8461e",pop:81},
+]);
+add("pas",[
+ {id:"lasagna",name:"Lasaña Boloñesa",desc:"Capas de pasta, ragú de carne, bechamel y parmesano gratinado.",price:29.9,art:"pasta",color:"#c8442a",noodle:"#f2c46a",pop:83},
+ {id:"alfredo",name:"Fettuccine Alfredo",desc:"Fettuccine en salsa de crema, mantequilla y parmesano.",price:27.9,art:"pasta",color:"#f4ead2",noodle:"#f2d27a",pop:77},
+ {id:"pestopasta",name:"Tallarines al Pesto",desc:"Pesto de albahaca, nueces y queso parmesano.",price:26.9,art:"pasta",color:"#4f8f3a",noodle:"#e8d07a",pop:71},
+ {id:"bolognesa",name:"Spaghetti Bolognesa",desc:"Spaghetti con salsa de carne cocida a fuego lento.",price:26.9,art:"pasta",color:"#b8381e",noodle:"#f7d27a",pop:80},
+ {id:"huancpasta",name:"Tallarines a la Huancaína",desc:"Con lomo saltado encima. Clásico peruano.",price:34.9,art:"pasta",color:"#f2b62a",noodle:"#f7e0a0",pop:74,tags:["new"]},
+]);
+add("ens",[
+ {id:"cesar",name:"Ensalada César",desc:"Lechuga romana, pollo grillado, crutones, parmesano y aderezo César.",price:22.9,art:"salad",pop:76},
+ {id:"griega",name:"Ensalada Griega",desc:"Tomate, pepino, aceituna, cebolla morada y queso feta.",price:21.9,art:"salad",pop:62,veg:1},
+ {id:"capresesal",name:"Ensalada Caprese",desc:"Tomate, mozzarella fresca, albahaca y balsámico.",price:23.9,art:"salad",pop:60,veg:1},
+ {id:"quinoa",name:"Bowl de Quinua",desc:"Quinua, palta, choclo, tomate y vinagreta de maracuyá.",price:24.9,art:"salad",pop:66,veg:1,tags:["new"]},
+]);
+add("pos",[
+ {id:"brownie",name:"Brownie Lava",desc:"Brownie tibio con centro de chocolate fundido. 4 unidades.",price:16.9,art:"brownie",color:"#4a2414",pop:90,tags:["hot"]},
+ {id:"canela",name:"Rollos de Canela",desc:"Con glaseado de queso crema. 4 unidades.",price:15.9,art:"roll",pop:85},
+ {id:"cheesecake",name:"Cheesecake de Fresa",desc:"Base de galleta, crema de queso y coulis de fresa.",price:14.9,art:"cake",color:"#ffe6b0",top2:"#e3263b",pop:79},
+ {id:"tresleches",name:"Torta Tres Leches",desc:"Bizcocho húmedo bañado en tres leches con canela.",price:13.9,art:"cake",color:"#fff1d0",top2:"#fffaf0",pop:74},
+ {id:"choco",name:"Torta de Chocolate",desc:"Bizcocho de cacao con fudge y crocante de nuez.",price:14.9,art:"cake",color:"#5a2a14",top2:"#8a4a24",pop:81},
+ {id:"helado",name:"Helado Lúcuma",desc:"Helado artesanal de lúcuma. 2 bolas.",price:11.9,art:"icecream",color:"#e8a35a",pop:72},
+ {id:"heladofresa",name:"Helado de Fresa",desc:"Helado cremoso de fresa con trozos de fruta. 2 bolas.",price:11.9,art:"icecream",color:"#ff7aa8",pop:65,tags:["new"]},
+ {id:"pizzanutella",name:"Pizza Dulce de Avellana",desc:"Crema de avellanas, fresas y azúcar glas. Para compartir.",price:24.9,art:"brownie",color:"#7a3e1c",pop:78},
+]);
+add("beb",[
+ {id:"cola15",name:"Gaseosa Cola 1.5 L",desc:"Bien helada, ideal para compartir.",price:9.9,art:"bottle",color:"#3a1410",pop:95},
+ {id:"amarilla15",name:"Gaseosa Amarilla 1.5 L",desc:"El sabor dorado que acompaña todo.",price:9.9,art:"bottle",color:"#f2c41a",pop:93},
+ {id:"cola500",name:"Gaseosa Cola 500 ml",desc:"Botella personal.",price:4.9,art:"bottle",color:"#3a1410",pop:80},
+ {id:"limonada",name:"Limonada Frozen",desc:"Limón recién exprimido, frappé. 500 ml.",price:9.9,art:"cup",color:"#c6ef5a",pop:84,tags:["hot"]},
+ {id:"chicha",name:"Chicha Morada",desc:"Preparada en casa con maíz morado, piña y canela. 1 L.",price:11.9,art:"bottle",color:"#5a1458",pop:87},
+ {id:"maracuya",name:"Maracuyá Frozen",desc:"Jugo de maracuyá frappé. 500 ml.",price:9.9,art:"cup",color:"#ffb21f",pop:76},
+ {id:"te",name:"Té Helado de Durazno",desc:"Té negro con durazno. 500 ml.",price:7.9,art:"cup",color:"#e88a3a",pop:63},
+ {id:"agua",name:"Agua sin Gas 625 ml",desc:"Agua de mesa.",price:3.9,art:"bottle",color:"#7ad6ff",pop:58},
+ {id:"cerveza",name:"Cerveza Artesanal",desc:"Pale ale de Lima, 330 ml. Solo mayores de 18 años.",price:12.9,art:"bottle",color:"#b8601a",pop:70,tags:["new"]},
+ {id:"milkshake",name:"Milkshake de Oreo",desc:"Helado de vainilla con galleta triturada. 450 ml.",price:13.9,art:"cup",color:"#e9e2f4",pop:79},
+]);
+const byId = Object.fromEntries(P.map(p=>[p.id,p]));
+const isPizza = p => ["pz","esp","veg","ext"].includes(p.cat);
+const SIZES=[{id:"p",name:"Personal",sub:"4 tajadas",k:.55},{id:"m",name:"Mediana",sub:"6 tajadas",k:1},{id:"f",name:"Familiar",sub:"8 tajadas",k:1.42}];
+const CRUSTS=[{id:"cl",name:"Clásica",add:0},{id:"dl",name:"Delgada",add:0},{id:"pan",name:"Pan Pizza",add:4},{id:"br",name:"Borde queso",add:7}];
+const EXTRAS=[{id:"xq",name:"Extra queso",add:5},{id:"xp",name:"Pepperoni",add:5},{id:"xc",name:"Champiñones",add:4},{id:"xj",name:"Jalapeños",add:3},{id:"xt",name:"Tocino",add:5},{id:"xa",name:"Aceitunas",add:3}];
+const COUPONS={PIZZA20:{t:"pct",v:20,label:"20% de descuento"},DELIVERY0:{t:"ship",label:"Delivery gratis"},LIMA10:{t:"amt",v:10,label:"S/ 10 de descuento",min:50}};
+const money = n => "S/ "+n.toFixed(2);
+
+/* ================= state ================= */
+const store = {get(k,d){try{const v=localStorage.getItem("pz_"+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem("pz_"+k,JSON.stringify(v))}catch(e){}}};
+const S = {
+  tab:"home", cat:"all", q:"", sort:"pop",
+  cart: store.get("cart",[]),
+  favs: new Set(store.get("favs",["pepperoni","lomo","brownie"])),
+  coupon: store.get("coupon",null),
+  orders: store.get("orders",[{id:"PZ-48213",date:Date.now()-86400000*3,items:[{id:"suprema",size:"f",crust:"cl",extras:[],qty:1},{id:"cola15",qty:1}],total:75.6,status:"done"}]),
+  points: store.get("points",340),
+  pay:"card",
+};
+const save = () => {store.set("cart",S.cart);store.set("favs",[...S.favs]);store.set("coupon",S.coupon);store.set("orders",S.orders);store.set("points",S.points)};
+
+function unitPrice(l){const p=byId[l.id];if(!isPizza(p))return p.price;const sz=SIZES.find(s=>s.id===l.size)||SIZES[1];const cr=CRUSTS.find(c=>c.id===l.crust)||CRUSTS[0];const ex=(l.extras||[]).reduce((a,id)=>a+(EXTRAS.find(e=>e.id===id)?.add||0),0);return Math.round((p.price*sz.k+cr.add+ex)*10)/10}
+function totals(){
+  const sub=S.cart.reduce((a,l)=>a+unitPrice(l)*l.qty,0);
+  let disc=0, ship=sub>0?6.9:0;
+  const c=S.coupon&&COUPONS[S.coupon];
+  if(c){ if(c.t==="pct")disc=sub*c.v/100; if(c.t==="amt"&&sub>=c.min)disc=c.v; if(c.t==="ship")ship=0; }
+  if(sub>=90)ship=0;
+  return {sub,disc,ship,total:Math.max(0,sub-disc+ship),count:S.cart.reduce((a,l)=>a+l.qty,0)};
+}
+
+/* ================= helpers ================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+let toastT; function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("on");clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove("on"),2000)}
+const catOf = id => CATS.find(c=>c.id===id);
+function tint(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16},${(n>>8)&255},${n&255},${a})`}
+
+/* ================= header + tabs ================= */
+const LOGO='<svg viewBox="0 0 40 40" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc23d"/><stop offset="1" stop-color="#ff4d2e"/></linearGradient></defs><path d="M20 3 37 34Q20 40 3 34z" fill="url(#lg)"/><path d="M6 31Q20 36 34 31" stroke="#b25a12" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="20" cy="17" r="3.2" fill="#c62a1c"/><circle cx="14" cy="26" r="2.8" fill="#c62a1c"/><circle cx="25" cy="27" r="2.6" fill="#c62a1c"/></svg>';
+$("#brand").innerHTML = LOGO+'<div>Pizzaroma<small>Delivery en Lima · 30 min</small></div>';
+$("#favTop").innerHTML = I.heart;
+const TABS=[["home","Inicio",I.home],["menu","Carta",I.menu],["cart","Carrito",I.bag],["orders","Pedidos",I.clock],["me","Perfil",I.user]];
+$("#tabbar").insertAdjacentHTML("beforeend",TABS.map(([id,n,ic])=>`<button class="tab" data-tab="${id}" aria-label="${n}">${ic}<span>${n}</span></button>`).join(""));
+function updateBadges(pop){
+  const {count}=totals();
+  $("#cartTop").innerHTML=I.bag+(count?`<span class="badge${pop?" pop":""}">${count}</span>`:"");
+}
+function movePill(){const b=document.querySelector(`.tab[data-tab="${S.tab}"]`);if(!b)return;const pill=$("#pill");pill.style.left=b.offsetLeft+"px";pill.style.width=b.offsetWidth+"px";document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t===b))}
+
+/* ================= views ================= */
+function cardHTML(p,i){
+  const c=catOf(p.cat).bg, tags=[...(p.tags||[])];
+  if(p.veg) tags.push("veg");
+  const tagHTML=tags.slice(0,2).map(t=>`<span class="tag ${t}">${{new:"Nuevo",hot:"Top",veg:"Veggie"}[t]}</span>`).join("");
+  return `<article class="card glass" style="animation-delay:${Math.min(i,12)*40}ms" data-open="${p.id}" tabindex="0" role="button" aria-label="${esc(p.name)}">
+    <div class="pic" style="background:radial-gradient(circle at 50% 40%,${tint(c,.55)},${tint(c,.12)})">${art(p)}<div class="tagrow">${tagHTML}</div>
+      <button class="fav${S.favs.has(p.id)?" on":""}" data-fav="${p.id}" aria-label="Favorito">${I.heart}</button></div>
+    <div class="name">${esc(p.name)}</div>
+    <div class="meta"><span class="price">${isPizza(p)?"<small>desde</small>":""}${money(isPizza(p)?Math.round(p.price*SIZES[0].k*10)/10:p.price)}</span>
+    <button class="add" data-quick="${p.id}" aria-label="Agregar ${esc(p.name)}">${I.plus}</button></div></article>`;
+}
+function list(){
+  let arr=P.filter(p=>S.cat==="all"||p.cat===S.cat);
+  if(S.q){const q=norm(S.q);arr=P.filter(p=>norm(p.name+" "+p.desc+" "+catOf(p.cat).name).includes(q))}
+  if(S.sort==="pop")arr=[...arr].sort((a,b)=>b.pop-a.pop);
+  if(S.sort==="low")arr=[...arr].sort((a,b)=>a.price-b.price);
+  if(S.sort==="high")arr=[...arr].sort((a,b)=>b.price-a.price);
+  return arr;
+}
+function chipsHTML(){return `<div class="chips" id="chips">${CATS.map(c=>{const sample=c.id==="all"?byId.suprema:P.find(p=>p.cat===c.id);return `<button class="chip glass${S.cat===c.id?" on":""}" data-cat="${c.id}"><span class="dot" style="background:${tint(c.bg,.35)}">${art(sample)}</span>${c.name}</button>`}).join("")}</div>`}
+function searchHTML(){return `<label class="search glass">${I.search}<input id="q" type="search" placeholder="Busca pizzas, alitas, postres…" value="${esc(S.q)}" autocomplete="off"><button class="clear" id="qx" aria-label="Borrar"${S.q?"":" hidden"}>${I.x}</button></label>`}
+
+const V = {
+ home(){
+  const h=new Date().getHours(), greet=h<12?"Buenos días":h<19?"Buenas tardes":"Buenas noches";
+  const top=[...P].sort((a,b)=>b.pop-a.pop).slice(0,6), news=P.filter(p=>(p.tags||[]).includes("new")).slice(0,4);
+  return `<div class="view">
+   <div class="hello"><h1>${greet},<br>¿qué <em>pizza</em> hoy?</h1><p>${P.length} productos recién horneados, listos en 30 minutos.</p></div>
+   ${searchHTML()}
+   <div class="promos" id="promos">
+    <button class="promo p1" data-coupon="PIZZA20"><div class="art">${pizzaSVG({id:"promo1",top:["pep","olive"]})}</div><div class="txt"><div class="kick">Solo esta semana</div><h3>20% en toda la carta</h3><span class="code">PIZZA20</span></div></button>
+    <button class="promo p2" data-open="stuffedcrust"><div class="art">${pizzaSVG({id:"promo2",top:["pep","ham"],stuffed:1})}</div><div class="txt"><div class="kick">Nuevo</div><h3>Borde Relleno Royale</h3><span class="code">Pruébala</span></div></button>
+    <button class="promo p3" data-coupon="DELIVERY0"><div class="art">${pizzaSVG({id:"promo3",top:["pepper","mush","olive"]})}</div><div class="txt"><div class="kick">Martes y jueves</div><h3>Delivery gratis</h3><span class="code">DELIVERY0</span></div></button>
+    <button class="promo p4" data-open="lomo"><div class="art">${pizzaSVG({id:"promo4",top:["meat","tomato","onion"]})}</div><div class="txt"><div class="kick">Sabor peruano</div><h3>Pizza Lomo Saltado</h3><span class="code">Ver más</span></div></button>
+   </div>
+   <div class="sec-h"><h2>Categorías</h2></div>
+   ${chipsHTML()}
+   <div class="sec-h"><h2>Las más pedidas</h2><button data-go="menu">Ver carta</button></div>
+   <div class="grid">${top.map(cardHTML).join("")}</div>
+   <div class="sec-h"><h2>Recién salidas del horno</h2></div>
+   <div class="grid">${news.map(cardHTML).join("")}</div>
+  </div>`;
+ },
+ menu(){
+  const arr=list();
+  return `<div class="view">
+   <div class="hello"><h1>La <em>carta</em></h1><p>${arr.length} de ${P.length} productos${S.q?` para “${esc(S.q)}”`:""}</p></div>
+   ${searchHTML()}
+   ${chipsHTML()}
+   <div class="seg" role="group" aria-label="Ordenar">${[["pop","Populares"],["low","Menor precio"],["high","Mayor precio"]].map(([k,n])=>`<button data-sort="${k}" class="${S.sort===k?"on":""}">${n}</button>`).join("")}</div>
+   ${arr.length?`<div class="grid">${arr.map(cardHTML).join("")}</div>`:`<div class="empty glass">${otherSVG({id:"e",art:"balls",color:"#ff7a3d"})}<b>No encontramos “${esc(S.q)}”</b>Prueba con “pepperoni”, “alitas” o “chicha”.</div>`}
+  </div>`;
+ },
+ favs(){
+  const arr=P.filter(p=>S.favs.has(p.id));
+  return `<div class="view"><div class="hello"><h1>Tus <em>favoritos</em></h1><p>${arr.length} guardados</p></div>
+   ${arr.length?`<div class="grid">${arr.map(cardHTML).join("")}</div>`:`<div class="empty glass">${I.heart}<b>Aún no tienes favoritos</b>Toca el corazón de cualquier producto para guardarlo aquí.</div>`}</div>`;
+ },
+ cart(){
+  const t=totals();
+  if(!S.cart.length) return `<div class="view"><div class="hello"><h1>Tu <em>carrito</em></h1></div><div class="empty glass">${pizzaSVG({id:"emptycart",top:[]})}<b>Tu carrito está vacío</b>Agrega algo rico de la carta y aparecerá aquí.<button class="cta" data-go="menu" style="flex:none;margin-top:6px"><span>Ver la carta</span>${I.chev.replace('<svg','<svg width="20" height="20"')}</button></div></div>`;
+  const c=S.coupon&&COUPONS[S.coupon];
+  return `<div class="view"><div class="hello"><h1>Tu <em>carrito</em></h1><p>${t.count} producto${t.count>1?"s":""}</p></div>
+   <div style="display:flex;flex-direction:column;gap:10px">${S.cart.map((l,i)=>{const p=byId[l.id];const det=isPizza(p)?[SIZES.find(s=>s.id===l.size).name,CRUSTS.find(c=>c.id===l.crust).name,...(l.extras||[]).map(e=>EXTRAS.find(x=>x.id===e).name)].join(" · "):catOf(p.cat).name;
+     return `<div class="line glass" style="animation-delay:${i*50}ms"><div class="pic" style="background:${tint(catOf(p.cat).bg,.3)}">${art(p)}</div><div class="info"><b>${esc(p.name)}</b><span>${esc(det)}</span></div>
+     <div class="right"><span class="price" style="font-size:15px">${money(unitPrice(l)*l.qty)}</span><div class="qty"><button data-dec="${i}" aria-label="Quitar uno">−</button><output>${l.qty}</output><button data-inc="${i}" aria-label="Agregar uno">+</button></div></div></div>`}).join("")}</div>
+   <div class="coupon glass">${I.gift.replace('<svg','<svg width="20" height="20" style="flex:none;opacity:.8"')}<input id="cp" placeholder="Código de cupón" value="${esc(S.coupon||"")}" autocomplete="off"><button class="pill-btn" id="cpBtn">${S.coupon?"Quitar":"Aplicar"}</button></div>
+   <p class="hint${c?" ok":""}" id="cpHint">${c?"Cupón aplicado: "+c.label:"Prueba PIZZA20, DELIVERY0 o LIMA10"}</p>
+   <div class="sum glass">
+    <div class="row muted"><span>Subtotal</span><span>${money(t.sub)}</span></div>
+    ${t.disc?`<div class="row disc"><span>Descuento</span><span>−${money(t.disc)}</span></div>`:""}
+    <div class="row muted"><span>Delivery</span><span>${t.ship?money(t.ship):"Gratis"}</span></div>
+    ${t.sub<90&&t.ship?`<div class="row muted" style="font-size:12.5px"><span>Te faltan ${money(90-t.sub)} para delivery gratis</span></div><div class="bar"><i style="width:${Math.min(100,t.sub/90*100)}%"></i></div>`:""}
+    <div class="row total"><span>Total</span><span>${money(t.total)}</span></div>
+   </div>
+   <button class="cta" id="checkout"><span>Ir a pagar</span><span class="p">${money(t.total)}</span></button>
+  </div>`;
+ },
+ orders(){
+  const live=S.orders.find(o=>o.status==="live");
+  return `<div class="view"><div class="hello"><h1>Tus <em>pedidos</em></h1></div>
+   ${live?trackHTML(live):""}
+   ${S.orders.filter(o=>o!==live).map(o=>`<div class="order glass"><div class="row"><b>${o.id}</b><span class="status done">Entregado</span></div><div class="row muted" style="font-size:13px"><span>${new Date(o.date).toLocaleDateString("es-PE",{day:"numeric",month:"short"})} · ${o.items.reduce((a,l)=>a+l.qty,0)} productos</span><span>${money(o.total)}</span></div><div style="font-size:13px;color:var(--ink-soft)">${o.items.map(l=>esc(byId[l.id].name)).join(", ")}</div><button class="pill-btn" data-reorder="${o.id}" style="align-self:flex-start;margin-top:4px">Volver a pedir</button></div>`).join("")}
+   ${!S.orders.length?`<div class="empty glass">${I.clock}<b>Sin pedidos todavía</b>Cuando pidas, podrás seguir tu pizza aquí en tiempo real.</div>`:""}
+  </div>`;
+ },
+ me(){
+  const lvl=S.points>=1000?"Oro":S.points>=500?"Plata":"Bronce", next=S.points>=1000?1000:S.points>=500?1000:500;
+  return `<div class="view">
+   <div class="me glass"><div class="avatar">PZ</div><div><div style="font-family:var(--font-display);font-weight:800;font-size:20px">Cliente Pizzaroma</div><div style="color:var(--ink-soft);font-size:13px">Miembro nivel ${lvl}</div></div></div>
+   <div class="points"><div style="font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase">Puntos Pizzaroma</div><div class="big">${S.points}</div><div class="bar"><i style="width:${Math.min(100,S.points/next*100)}%"></i></div><div style="font-size:13px">${S.points>=1000?"Nivel máximo alcanzado":`${next-S.points} puntos para el siguiente nivel`} · ganas 1 punto por cada S/ 1</div></div>
+   <div class="menu glass">
+    <button data-go="favs">${I.heart}<span>Favoritos</span><em>${S.favs.size}</em>${I.chev}</button>
+    <button data-go="orders">${I.clock}<span>Historial de pedidos</span><em>${S.orders.length}</em>${I.chev}</button>
+    <button data-info="addr">${I.pin}<span>Direcciones</span><em>Av. Larco 345</em>${I.chev}</button>
+    <button data-info="pay">${I.card}<span>Métodos de pago</span><em>Visa ··4821</em>${I.chev}</button>
+    <button data-info="cup">${I.gift}<span>Cupones</span><em>${Object.keys(COUPONS).length}</em>${I.chev}</button>
+   </div>
+   <div class="sec-h"><h2>Versiones</h2><span style="font-size:13px;color:var(--ink-faint)">Instalada: ${APP_VERSION}</span></div>
+   ${[["3.0","Octubre 2026",["Nuevo diseño liquid glass con desenfoque y reflejos","Seguimiento del pedido en vivo","Puntos Pizzaroma y niveles","Carta peruana: Lomo Saltado, Ají de Gallina y más"]],
+      ["2.0","Junio 2026",["Personaliza tamaño, masa y extras","Favoritos y búsqueda","Cupones de descuento"]],
+      ["1.0","Enero 2026",["Primera versión: carta, carrito y pedido por delivery"]]].map(([v,d,ls],i)=>`<div class="ver glass"><header><b>Versión ${v}</b>${i===0?'<span class="status done">Actual</span>':`<time>${d}</time>`}</header>${i===0?`<time>${d}</time>`:""}<ul>${ls.map(x=>`<li>${x}</li>`).join("")}</ul></div>`).join("")}
+  </div>`;
+ },
+};
+function trackHTML(o){
+  const STEPS=[["Pedido recibido","Confirmamos tu pedido"],["Preparando","Estiramos la masa y ponemos los ingredientes"],["En el horno","Horneando a 300 °C"],["En camino","Tu repartidor va hacia ti"],["Entregado","¡Buen provecho!"]];
+  const el=(Date.now()-o.date)/1000, step=Math.min(4,Math.floor(el/12)), pct=Math.min(100,el/48*100);
+  const eta=Math.max(1,Math.round(30-el/48*30));
+  return `<div class="track glass" id="track"><div class="track-top"><div class="oven">${pizzaSVG({id:"oven",top:["pep"]})}</div><div><h3>${STEPS[step][0]}</h3><div class="eta">${o.id} · ${step<4?`llega en ~${eta} min`:"entregado"}</div></div></div>
+   <div class="bar"><i style="width:${pct}%"></i></div>
+   <ol class="steps">${STEPS.map((s,i)=>`<li class="${i<step||step===4?"done":i===step?"now":""}"><span class="knob">${I.check}</span><div><b>${s[0]}</b><small>${s[1]}</small></div></li>`).join("")}</ol>
+   <div class="row muted" style="font-size:13px"><span>${o.items.reduce((a,l)=>a+l.qty,0)} productos · ${o.payLabel||"Tarjeta"}</span><span>${money(o.total)}</span></div></div>`;
+}
+
+/* ================= render + routing ================= */
+let lastView="";
+function render(keepScroll){
+  const key=S.tab;
+  $("#view").innerHTML=V[key]();
+  if(!keepScroll||lastView!==key) $("#scroll").scrollTop=0;
+  lastView=key;
+  updateBadges(); movePill(); bindSearch();
+}
+function bindSearch(){
+  const q=$("#q"); if(!q) return;
+  q.addEventListener("input",()=>{S.q=q.value; if(S.tab!=="menu"){go("menu");const n=$("#q");n.focus();n.setSelectionRange(n.value.length,n.value.length);return} const pos=q.selectionStart; renderMenuOnly(); const n=$("#q");n.focus();n.setSelectionRange(pos,pos)});
+}
+function renderMenuOnly(){render(true)}
+function go(tab,push=true){ if(tab===S.tab&&push){$("#scroll").scrollTop=0;return} S.tab=tab; if(push) history.pushState({tab},"","#"+tab); render(); }
+window.addEventListener("popstate",e=>{
+  if(sheetOpen){closeSheet(false);return}
+  const t=(e.state&&e.state.tab)||location.hash.slice(1)||"home"; S.tab=V[t]?t:"home"; render();
+});
+
+/* ================= sheet ================= */
+let sheetOpen=false;
+function openSheet(html){ $("#sheetInner").innerHTML=html; $("#sheet").classList.add("on"); $("#scrim").classList.add("on"); sheetOpen=true; history.pushState({tab:S.tab,sheet:1},"","#"+S.tab); }
+function closeSheet(viaHistory=true){ if(!sheetOpen)return; sheetOpen=false; $("#sheet").classList.remove("on"); $("#scrim").classList.remove("on"); if(viaHistory) history.back(); }
+$("#scrim").addEventListener("click",()=>closeSheet());
+// swipe down to close
+(()=>{let y0=null,dy=0;const sh=$("#sheet");sh.addEventListener("touchstart",e=>{const body=sh.querySelector(".sheet-body");if(body&&body.scrollTop>0)return;y0=e.touches[0].clientY;dy=0;sh.style.transition="none"},{passive:true});
+ sh.addEventListener("touchmove",e=>{if(y0===null)return;dy=Math.max(0,e.touches[0].clientY-y0);sh.style.transform=`translateY(${dy}px)`},{passive:true});
+ sh.addEventListener("touchend",()=>{if(y0===null)return;sh.style.transition="";sh.style.transform="";if(dy>110)closeSheet();y0=null})})();
+
+let draft=null;
+function openProduct(id){
+  const p=byId[id]; draft={id,size:"m",crust:"cl",extras:[],qty:1};
+  const c=catOf(p.cat).bg;
+  const html=`<div class="sheet-body">
+    <div class="hero-pic" style="background:radial-gradient(circle,${tint(c,.5)},transparent 70%)">${art(p)}</div>
+    <div><h2 class="d-title">${esc(p.name)}</h2><p class="d-desc">${esc(p.desc)}</p></div>
+    <div class="facts"><span class="fact">${catOf(p.cat).name}</span>${p.veg?'<span class="fact">Vegetariana</span>':""}${p.spicy?'<span class="fact">Picante</span>':""}<span class="fact">★ ${(4+p.pop/100*.9).toFixed(1)}</span><span class="fact">${isPizza(p)?"18–25 min":"10–15 min"}</span></div>
+    ${isPizza(p)?`
+    <div><p class="opt-h">Tamaño</p><div class="seg" id="szSeg">${SIZES.map(s=>`<button data-size="${s.id}" class="${s.id==="m"?"on":""}">${s.name}<small>${s.sub}</small></button>`).join("")}</div></div>
+    <div><p class="opt-h">Masa</p><div class="seg" id="crSeg">${CRUSTS.map(cr=>`<button data-crust="${cr.id}" class="${cr.id==="cl"?"on":""}">${cr.name}<small>${cr.add?"+S/ "+cr.add:"Incluida"}</small></button>`).join("")}</div></div>
+    <div><p class="opt-h">Extras</p><div class="extras">${EXTRAS.map(e=>`<button class="extra" data-extra="${e.id}"><span>${e.name}</span><span>+S/ ${e.add}</span></button>`).join("")}</div></div>`:""}
+  </div>
+  <div class="sheet-foot"><div class="qty glass"><button data-dq="-1" aria-label="Menos">−</button><output id="dqty">1</output><button data-dq="1" aria-label="Más">+</button></div>
+   <button class="cta" id="addCart"><span>Agregar</span><span class="p" id="dprice"></span></button></div>`;
+  openSheet(html); updDraft();
+}
+function updDraft(){ if(!draft)return; $("#dqty").textContent=draft.qty; $("#dprice").textContent=money(unitPrice(draft)*draft.qty); }
+
+function addToCart(l,fromEl){
+  const same=S.cart.find(x=>x.id===l.id&&x.size===l.size&&x.crust===l.crust&&JSON.stringify(x.extras||[])===JSON.stringify(l.extras||[]));
+  if(same) same.qty+=l.qty; else S.cart.push({...l,extras:[...(l.extras||[])]});
+  save(); flyTo(fromEl,byId[l.id]); setTimeout(()=>updateBadges(true),650);
+  toast(`${byId[l.id].name} agregado al carrito`);
+  if(navigator.vibrate) try{navigator.vibrate(12)}catch(e){}
+}
+function flyTo(el,p){
+  if(!el)return; const r=el.getBoundingClientRect(), t=$("#cartTop").getBoundingClientRect();
+  const f=document.createElement("div"); f.className="fly"; f.innerHTML=art(p); f.style.left=(r.left+r.width/2-23)+"px"; f.style.top=(r.top+r.height/2-23)+"px";
+  document.body.appendChild(f);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{f.style.transform=`translate(${t.left+t.width/2-(r.left+r.width/2)}px,${t.top+t.height/2-(r.top+r.height/2)}px) scale(.35) rotate(540deg)`;f.style.opacity=".4"}));
+  setTimeout(()=>f.remove(),800);
+}
+
+function openCheckout(){
+  const t=totals();
+  openSheet(`<form class="sheet-body" id="coForm" novalidate>
+    <div><h2 class="d-title">Finalizar pedido</h2><p class="d-desc">Llega en unos 30 minutos.</p></div>
+    <div class="field"><label for="coName">Nombre</label><input id="coName" required placeholder="¿A nombre de quién?" value="${esc(store.get("name",""))}"></div>
+    <div class="field"><label for="coPhone">Celular</label><input id="coPhone" required inputmode="tel" placeholder="9XX XXX XXX" value="${esc(store.get("phone",""))}"></div>
+    <div class="field"><label for="coAddr">Dirección de entrega</label><input id="coAddr" required placeholder="Calle, número, distrito" value="${esc(store.get("addr","Av. Larco 345, Miraflores"))}"></div>
+    <div class="field"><label for="coNote">Referencia (opcional)</label><textarea id="coNote" rows="2" placeholder="Ej.: edificio azul, tocar timbre 302"></textarea></div>
+    <div><p class="opt-h">Pago</p><div class="pay" id="paySeg">
+      <button type="button" data-pay="card" class="${S.pay==="card"?"on":""}">${I.card}Tarjeta</button>
+      <button type="button" data-pay="wallet" class="${S.pay==="wallet"?"on":""}">${I.phone}Yape / Plin</button>
+      <button type="button" data-pay="cash" class="${S.pay==="cash"?"on":""}">${I.cash}Efectivo</button></div></div>
+    <p class="hint err" id="coErr" hidden></p>
+    <div class="sum glass"><div class="row muted"><span>Productos</span><span>${money(t.sub-t.disc)}</span></div><div class="row muted"><span>Delivery</span><span>${t.ship?money(t.ship):"Gratis"}</span></div><div class="row total"><span>Total</span><span>${money(t.total)}</span></div></div>
+  </form>
+  <div class="sheet-foot"><button class="cta" id="placeOrder"><span>Confirmar pedido</span><span class="p">${money(t.total)}</span></button></div>`);
+}
+function placeOrder(){
+  const name=$("#coName").value.trim(), phone=$("#coPhone").value.replace(/\D/g,""), addr=$("#coAddr").value.trim(), err=$("#coErr");
+  const miss=[]; if(!name)miss.push("tu nombre"); if(phone.length<9)miss.push("un celular de 9 dígitos"); if(addr.length<6)miss.push("la dirección");
+  if(miss.length){err.textContent="Falta "+miss.join(", ")+".";err.hidden=false;return}
+  store.set("name",name);store.set("phone",phone);store.set("addr",addr);
+  const t=totals(), o={id:"PZ-"+Math.floor(10000+Math.random()*89999),date:Date.now(),items:S.cart.map(l=>({...l})),total:Math.round(t.total*100)/100,status:"live",payLabel:{card:"Tarjeta",wallet:"Yape / Plin",cash:"Efectivo"}[S.pay]};
+  S.orders.unshift(o); S.points+=Math.floor(t.total); S.cart=[]; S.coupon=null; save();
+  sheetOpen=false; $("#sheet").classList.remove("on"); $("#scrim").classList.remove("on");
+  S.tab="orders"; history.replaceState({tab:"orders"},"","#orders"); render(); confetti(); toast("¡Pedido confirmado! Ya estamos horneando");
+}
+// live tracker tick
+setInterval(()=>{
+  const live=S.orders.find(o=>o.status==="live"); if(!live)return;
+  if((Date.now()-live.date)/1000>=48){live.status="done";save();if(S.tab==="orders")render(true);toast("Tu pedido fue entregado. ¡Buen provecho!");return}
+  if(S.tab==="orders"){const tr=$("#track");if(tr){const tmp=document.createElement("div");tmp.innerHTML=trackHTML(live);tr.replaceWith(tmp.firstElementChild)}}
+},1000);
+
+/* ================= confetti ================= */
+function confetti(){
+  if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const cv=$("#confetti"),cx=cv.getContext("2d");cv.width=innerWidth*devicePixelRatio;cv.height=innerHeight*devicePixelRatio;cx.scale(devicePixelRatio,devicePixelRatio);
+  const cols=["#ffc23d","#ff4d2e","#c03bff","#3ddc84","#1ec8ff","#fff"],ps=Array.from({length:140},()=>({x:innerWidth/2,y:innerHeight*.35,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,s:4+Math.random()*6,c:cols[Math.random()*cols.length|0],r:Math.random()*6,vr:(Math.random()-.5)*.4}));
+  let f=0;(function tick(){cx.clearRect(0,0,innerWidth,innerHeight);ps.forEach(p=>{p.vy+=.35;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;cx.save();cx.translate(p.x,p.y);cx.rotate(p.r);cx.fillStyle=p.c;cx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);cx.restore()});if(++f<150)requestAnimationFrame(tick);else cx.clearRect(0,0,innerWidth,innerHeight)})();
+}
+
+/* ================= events ================= */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("button,[data-open]"); if(!el)return;
+  const d=el.dataset;
+  if(d.tab){ if(e.detail>0&&!REDUCED) return; return go(d.tab); }  // pointer taps are handled by the lens
+  if(d.go) { if(sheetOpen) closeSheet(); return go(d.go); }
+  if(d.fav){ e.stopPropagation(); S.favs.has(d.fav)?S.favs.delete(d.fav):S.favs.add(d.fav); save(); el.classList.toggle("on"); toast(S.favs.has(d.fav)?"Guardado en favoritos":"Quitado de favoritos"); if(S.tab==="favs")render(true); return; }
+  if(d.quick){ e.stopPropagation(); const p=byId[d.quick]; if(isPizza(p)) return openProduct(p.id); return addToCart({id:p.id,qty:1},el); }
+  if(d.open) return openProduct(d.open);
+  if(d.cat){ S.cat=d.cat; S.q=""; if(S.tab!=="menu") return go("menu"); render(true); document.querySelector(`.chip[data-cat="${d.cat}"]`)?.scrollIntoView({inline:"center",block:"nearest",behavior:"smooth"}); return; }
+  if(d.sort){ S.sort=d.sort; return render(true); }
+  if(d.coupon){ S.coupon=d.coupon; save(); toast(`Cupón ${d.coupon} guardado para tu pedido`); return; }
+  if(d.size){ draft.size=d.size; el.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===el)); return updDraft(); }
+  if(d.crust){ draft.crust=d.crust; el.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===el)); return updDraft(); }
+  if(d.extra){ const i=draft.extras.indexOf(d.extra); i>=0?draft.extras.splice(i,1):draft.extras.push(d.extra); draft.extras.sort(); el.classList.toggle("on"); return updDraft(); }
+  if(d.dq){ draft.qty=Math.max(1,Math.min(20,draft.qty+ +d.dq)); return updDraft(); }
+  if(el.id==="addCart"){ const l={...draft}; closeSheet(); setTimeout(()=>addToCart(l,$("#cartTop")),250); return; }
+  if(d.inc!==undefined){ S.cart[+d.inc].qty++; save(); return render(true); }
+  if(d.dec!==undefined){ const l=S.cart[+d.dec]; if(--l.qty<=0){S.cart.splice(+d.dec,1);toast("Producto quitado")} save(); return render(true); }
+  if(el.id==="cpBtn"){ if(S.coupon){S.coupon=null;save();return render(true)} const code=$("#cp").value.trim().toUpperCase(), h=$("#cpHint"); const c=COUPONS[code];
+    if(!c){h.textContent=code?`El código ${code} no existe. Revisa que esté bien escrito.`:"Escribe un código primero.";h.className="hint err";return}
+    if(c.min&&totals().sub<c.min){h.textContent=`${code} necesita un pedido mínimo de ${money(c.min)}.`;h.className="hint err";return}
+    S.coupon=code; save(); render(true); toast("Cupón aplicado"); return; }
+  if(el.id==="checkout") return openCheckout();
+  if(d.pay){ S.pay=d.pay; el.parentElement.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===el)); return; }
+  if(el.id==="placeOrder") return placeOrder();
+  if(d.reorder){ const o=S.orders.find(x=>x.id===d.reorder); o.items.forEach(l=>S.cart.push({...l})); save(); toast("Productos agregados al carrito"); return go("cart"); }
+  if(d.info){ toast({addr:"Dirección principal: Av. Larco 345, Miraflores",pay:"Pago guardado: Visa terminada en 4821",cup:"Cupones: PIZZA20 · DELIVERY0 · LIMA10"}[d.info]); return; }
+  if(el.id==="qx"){ S.q=""; render(true); return; }
+  if(el.id==="favTop") return go("favs");
+  if(el.id==="cartTop") return go("cart");
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&sheetOpen) closeSheet();
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches("[data-open]")&&e.target.tagName!=="BUTTON"){e.preventDefault();openProduct(e.target.dataset.open)}
+});
+addEventListener("resize",()=>{movePill();buildLens()});
+
+/* ================= liquid lens tab bar ================= */
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const bar=$("#tabbar"), lens=document.createElement("div"), lensIn=document.createElement("div");
+lens.className="lens"; lensIn.className="lens-in"; lens.appendChild(lensIn); bar.appendChild(lens);
+const L={x:0,v:0,target:0,w:0,h:0,dragging:false,running:false,shown:false,startX:0,moved:false,pid:null,last:0,scale:1.22};
+function tabsEls(){return [...bar.querySelectorAll(":scope > .tab")]}
+function buildLens(){
+  lensIn.innerHTML=""; tabsEls().forEach(t=>{const c=t.cloneNode(true);c.removeAttribute("data-tab");c.tabIndex=-1;c.setAttribute("aria-hidden","true");lensIn.appendChild(c)});
+  lensIn.style.width=bar.clientWidth+"px"; lensIn.style.height=bar.clientHeight+"px";
+  const t=tabsEls()[0]; L.w=t.offsetWidth*1.18; L.h=bar.clientHeight*1.38;
+  lens.style.width=L.w+"px"; lens.style.height=L.h+"px"; lens.style.marginTop=(-L.h/2)+"px";
+}
+function centerOf(tab){return tab.offsetLeft+tab.offsetWidth/2}
+function nearestTab(cx){let best=null,bd=1e9;tabsEls().forEach(t=>{const d=Math.abs(centerOf(t)-cx);if(d<bd){bd=d;best=t}});return best}
+function clampX(cx){const ts=tabsEls();return Math.max(centerOf(ts[0]),Math.min(centerOf(ts[ts.length-1]),cx))}
+function paintLens(){
+  // stretch along the motion, squash vertically: the droplet feel
+  const sp=Math.min(Math.abs(L.v)/1400,1), sx=1+sp*.38, sy=1-sp*.16;
+  const pop=L.shown?1:.6;
+  lens.style.transform=`translateX(${L.x-L.w/2}px) scale(${sx*pop},${sy*pop})`;
+  lens.style.opacity=L.shown?1:0;
+  // magnified copy of the bar, centred on the lens
+  const s=L.scale, cbx=L.x, cby=bar.clientHeight/2;
+  lensIn.style.transform=`translate(${L.w/2-s*cbx}px,${L.h/2-s*cby}px) scale(${s})`;
+  // fade the real tab sitting under the droplet so only the magnified copy shows
+  tabsEls().forEach(t=>{t.style.opacity=L.shown?Math.min(1,Math.max(0,(Math.abs(centerOf(t)-L.x)-L.w*.25)/(L.w*.45))).toFixed(2):""});
+}
+function step(ts){
+  const dt=Math.min(.032,(ts-(L.last||ts))/1000)||.016; L.last=ts;
+  const k=L.dragging?520:260, c=L.dragging?34:20;
+  const a=k*(L.target-L.x)-c*L.v; L.v+=a*dt; L.x+=L.v*dt;
+  paintLens();
+  const settled=!L.dragging&&Math.abs(L.target-L.x)<.4&&Math.abs(L.v)<8;
+  if(settled){
+    L.x=L.target; L.v=0; L.running=false; L.last=0;
+    lens.style.transition="transform .35s cubic-bezier(.3,1.4,.5,1),opacity .3s";
+    L.shown=false; paintLens(); bar.classList.remove("lensing");
+    setTimeout(()=>{lens.style.transition=""},360);
+    return;
+  }
+  requestAnimationFrame(step);
+}
+function run(){if(!L.running){L.running=true;L.last=0;requestAnimationFrame(step)}}
+function localX(e){return e.clientX-bar.getBoundingClientRect().left}
+bar.addEventListener("pointerdown",e=>{
+  if(REDUCED||e.button>0)return;
+  const cur=bar.querySelector(`:scope > .tab[data-tab="${S.tab}"]`)||tabsEls()[0];
+  if(!L.running){L.x=centerOf(cur);L.v=0}
+  L.dragging=true; L.moved=false; L.startX=localX(e); L.pid=e.pointerId;
+  L.target=clampX(localX(e));
+  try{bar.setPointerCapture(e.pointerId)}catch(_){}
+  lens.style.transition="opacity .18s"; L.shown=true; bar.classList.add("lensing","pressing");
+  paintLens(); setTimeout(()=>{if(L.dragging)lens.style.transition=""},180);
+  run();
+});
+bar.addEventListener("pointermove",e=>{
+  if(!L.dragging||e.pointerId!==L.pid)return;
+  const x=localX(e); if(Math.abs(x-L.startX)>6)L.moved=true;
+  L.target=clampX(x);
+});
+function release(e,cancel){
+  if(!L.dragging||e.pointerId!==L.pid)return;
+  L.dragging=false; bar.classList.remove("pressing");
+  const t=cancel?bar.querySelector(`:scope > .tab[data-tab="${S.tab}"]`):nearestTab(clampX(localX(e)));
+  L.target=centerOf(t); run();
+  if(t.dataset.tab!==S.tab){ if(navigator.vibrate) try{navigator.vibrate(8)}catch(_){} go(t.dataset.tab); }
+  else if(!L.moved) go(t.dataset.tab);
+}
+bar.addEventListener("pointerup",e=>release(e,false));
+bar.addEventListener("pointercancel",e=>release(e,true));
+buildLens();
+
+// boot
+const start=location.hash.slice(1); if(V[start]) S.tab=start;
+history.replaceState({tab:S.tab},"","#"+S.tab);
+render();
+requestAnimationFrame(movePill);
+})();
+</script>
+
+</body>
+</html>
