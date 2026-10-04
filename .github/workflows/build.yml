@@ -1,0 +1,96 @@
+name: Construir Pizzaroma
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: APK de Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Instalar dependencias
+        run: npm install
+      - name: Crear proyecto Android
+        run: |
+          npx cap add android
+          npx cap sync android
+      - name: Poner icono y version
+        run: |
+          RES=android/app/src/main/res
+          rm -rf $RES/mipmap-anydpi-v26
+          rm -f $RES/mipmap-*/ic_launcher.* $RES/mipmap-*/ic_launcher_round.*
+          cp -r assets/android-icons/* $RES/
+          sed -i 's/versionName "1.0"/versionName "3.0"/; s/versionCode 1$/versionCode 3/' android/app/build.gradle
+      - name: Compilar APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - name: Renombrar APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Pizzaroma-3.0.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pizzaroma-Android
+          path: Pizzaroma-3.0.apk
+
+  windows:
+    name: EXE de Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar dependencias
+        run: npm install
+      - name: Crear Pizzaroma.exe
+        shell: bash
+        run: >
+          npx @electron/packager . Pizzaroma
+          --platform=win32 --arch=x64
+          --icon=assets/icon.ico
+          --out=dist --overwrite
+          --app-version=3.0.0
+          --ignore="^/android"
+          --ignore="^/assets/android-icons"
+          --ignore="^/dist"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Pizzaroma-Windows
+          path: dist/Pizzaroma-win32-x64
+
+  publicar:
+    name: Publicar descargas
+    needs: [android, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+      - name: Empaquetar version de Windows
+        run: |
+          cd out
+          mv Pizzaroma-Windows Pizzaroma
+          zip -qr Pizzaroma-3.0-Windows.zip Pizzaroma
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v3.0.${{ github.run_number }}
+          name: Pizzaroma 3.0 (build ${{ github.run_number }})
+          files: |
+            out/Pizzaroma-Android/Pizzaroma-3.0.apk
+            out/Pizzaroma-3.0-Windows.zip
